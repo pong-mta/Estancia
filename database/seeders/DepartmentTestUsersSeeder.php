@@ -49,7 +49,17 @@ class DepartmentTestUsersSeeder extends Seeder
             ['code' => 'HEALTH', 'email' => 'health@edts.local', 'name' => 'Municipal Health Office'],
             ['code' => 'MSWDO', 'email' => 'mswdo@edts.local', 'name' => 'MSWDO'],
             ['code' => 'AGRICULTURE', 'email' => 'agriculture@edts.local', 'name' => 'Municipal Agriculture Office'],
-            ['code' => 'MDRRMO', 'email' => 'mdrrmo@edts.local', 'name' => 'MDRRMO'],
+            [
+                'code' => 'MDRRMO',
+                'email' => 'mdrrmo@edts.local',
+                'name' => 'MDRRMO',
+            ],
+            [
+                'code' => 'MDRRMO',
+                'email' => 'mdrrmo.operations@edts.local',
+                'name' => 'MDRRMO Operations Admin',
+                'role' => 'mdrrmo_operations_admin',
+            ],
             ['code' => 'CIVIL_SECURITY', 'email' => 'civil.security@edts.local', 'name' => 'Public Safety and Security Office'],
             ['code' => 'OSCA', 'email' => 'osca@edts.local', 'name' => 'OSCA'],
             ['code' => 'PDAO', 'email' => 'pdao@edts.local', 'name' => 'PDAO'],
@@ -57,7 +67,15 @@ class DepartmentTestUsersSeeder extends Seeder
             ['code' => 'YOUTH', 'email' => 'youth@edts.local', 'name' => 'Youth Development Office'],
         ];
 
+        $adminEmail = env('EDTS_ADMIN_EMAIL', 'admin@edts.local');
+
         foreach ($departments as $department) {
+            if (strcasecmp($department['email'], $adminEmail) === 0) {
+                throw new RuntimeException(
+                    "The email {$department['email']} conflicts with the System Administrator."
+                );
+            }
+
             $office = Office::query()
                 ->where('code', $department['code'])
                 ->first();
@@ -68,36 +86,36 @@ class DepartmentTestUsersSeeder extends Seeder
                 );
             }
 
-            $adminEmail = env('EDTS_ADMIN_EMAIL', 'admin@edts.local');
+            // If the account already exists, leave it completely unchanged.
+            $existingUser = User::query()
+                ->where('email', $department['email'])
+                ->first();
 
-            if (strcasecmp($department['email'], $adminEmail) === 0) {
-                throw new RuntimeException(
-                    "The email {$department['email']} conflicts with the System Administrator."
+            if ($existingUser) {
+                $this->command?->info(
+                    "Skipped existing user: {$department['email']}"
                 );
+
+                continue;
             }
 
-            $user = User::query()->firstOrNew([
-                'email' => $department['email'],
-            ]);
-
-            $isNewUser = !$user->exists;
-
+            // Only create a new account; never update existing users.
+            $user = new User();
             $user->name = $department['name'];
+            $user->email = $department['email'];
             $user->office_id = $office->id;
-            $user->system_role = 'approver';
+            $user->system_role = $department['role'] ?? 'approver';
             $user->is_active = true;
-
-            if ($isNewUser) {
-                $user->password = Hash::make($password);
-            }
-
+            $user->password = Hash::make($password);
             $user->save();
 
             $this->command?->info(
-                "Prepared: {$department['email']} — {$department['name']}"
+                "Created user: {$department['email']}"
             );
         }
 
-        $this->command?->info('All 34 municipal office test accounts processed.');
+        $this->command?->info(
+            'Seeder completed. Existing user accounts were not modified.'
+        );
     }
 }

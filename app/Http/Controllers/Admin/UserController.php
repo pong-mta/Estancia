@@ -83,6 +83,10 @@ class UserController extends Controller
                 ['value' => 'approver', 'label' => 'Approver'],
                 ['value' => 'records_officer', 'label' => 'Records Officer'],
                 ['value' => 'admin', 'label' => 'Administrator'],
+                [
+                    'value' => 'mdrrmo_operations_admin',
+                    'label' => 'MDRRMO Operations Admin',
+                ],
             ],
         ]);
     }

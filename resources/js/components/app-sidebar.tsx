@@ -15,8 +15,11 @@ import {
     Calculator,
     Scale,
     Landmark,
-    UserRoundCog,
     ShieldCheck,
+    Ambulance,
+    CalendarDays,
+    Radio,
+    History,
 } from "lucide-react";
 
 import AppLogo from "@/components/app-logo";
@@ -47,26 +50,14 @@ type SharedPageProps = {
 };
 
 const commonNavItems: NavItem[] = [
-    {
-        title: "Dashboard",
-        href: dashboard(),
-        icon: LayoutDashboard,
-    },
-    {
-        title: "Document Tracking",
-        href: "/admin/documents",
-        icon: FileText,
-    },
+    { title: "Dashboard", href: dashboard(), icon: LayoutDashboard },
+    { title: "Document Tracking", href: "/admin/documents", icon: FileText },
     {
         title: "Pending Approvals",
         href: "/admin/pending-approvals",
         icon: Send,
     },
-    {
-        title: "My Tasks",
-        href: "/admin/tasks",
-        icon: ClipboardCheck,
-    },
+    { title: "My Tasks", href: "/admin/tasks", icon: ClipboardCheck },
     {
         title: "Document History",
         href: "/admin/document-history",
@@ -76,18 +67,13 @@ const commonNavItems: NavItem[] = [
 
 const officeNavItems: Record<string, NavItem[]> = {
     GSO: [
-        {
-            title: "Procurement",
-            href: "/admin/procurement",
-            icon: Tags,
-        },
+        { title: "Procurement", href: "/admin/procurement", icon: Tags },
         {
             title: "Manage Suppliers",
             href: "/admin/suppliers",
             icon: Building2,
         },
     ],
-
     BUDGET: [
         {
             title: "Budget Review",
@@ -100,7 +86,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     ACCOUNTING: [
         {
             title: "Accounting Review",
@@ -113,7 +98,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     MAYOR: [
         {
             title: "Final Approvals",
@@ -126,33 +110,18 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     HRMO: [
-        {
-            title: "Personnel Documents",
-            href: "/admin/documents",
-            icon: Users,
-        },
-        {
-            title: "My Tasks",
-            href: "/admin/tasks",
-            icon: ClipboardCheck,
-        },
+        { title: "Personnel Documents", href: "/admin/documents", icon: Users },
+        { title: "My Tasks", href: "/admin/tasks", icon: ClipboardCheck },
     ],
-
     BAC: [
         {
             title: "Bidding & Procurement",
             href: "/admin/documents",
             icon: Scale,
         },
-        {
-            title: "My Tasks",
-            href: "/admin/tasks",
-            icon: ClipboardCheck,
-        },
+        { title: "My Tasks", href: "/admin/tasks", icon: ClipboardCheck },
     ],
-
     VICE_MAYOR: [
         {
             title: "Legislative Documents",
@@ -160,7 +129,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: Landmark,
         },
     ],
-
     SB: [
         {
             title: "Council Documents",
@@ -168,7 +136,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: Landmark,
         },
     ],
-
     SB_SECRETARY: [
         {
             title: "Legislative Records",
@@ -176,7 +143,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     ADMIN: [
         {
             title: "Office Coordination",
@@ -184,23 +150,12 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: BriefcaseBusiness,
         },
     ],
-
     LEGAL: [
-        {
-            title: "Legal Documents",
-            href: "/admin/documents",
-            icon: Scale,
-        },
+        { title: "Legal Documents", href: "/admin/documents", icon: Scale },
     ],
-
     PIO: [
-        {
-            title: "Office Documents",
-            href: "/admin/documents",
-            icon: FileText,
-        },
+        { title: "Office Documents", href: "/admin/documents", icon: FileText },
     ],
-
     TREASURER: [
         {
             title: "Treasury Documents",
@@ -208,7 +163,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: Calculator,
         },
     ],
-
     ASSESSOR: [
         {
             title: "Assessment Documents",
@@ -216,7 +170,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     PROCUREMENT: [
         {
             title: "Procurement Documents",
@@ -224,7 +177,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: Tags,
         },
     ],
-
     PROPERTY: [
         {
             title: "Property Documents",
@@ -232,7 +184,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: Building2,
         },
     ],
-
     INTERNAL_AUDIT: [
         {
             title: "Audit Documents",
@@ -240,7 +191,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: ShieldCheck,
         },
     ],
-
     MPDO: [
         {
             title: "Planning Documents",
@@ -248,7 +198,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     ENGINEERING: [
         {
             title: "Engineering Documents",
@@ -256,7 +205,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: Building2,
         },
     ],
-
     CIVIL_REGISTRY: [
         {
             title: "Registry Documents",
@@ -264,15 +212,9 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     BPLO: [
-        {
-            title: "Permit Documents",
-            href: "/admin/documents",
-            icon: FileText,
-        },
+        { title: "Permit Documents", href: "/admin/documents", icon: FileText },
     ],
-
     MENRO: [
         {
             title: "Environment Documents",
@@ -280,7 +222,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     TOURISM: [
         {
             title: "Tourism Documents",
@@ -288,7 +229,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     PESO: [
         {
             title: "Employment Documents",
@@ -296,7 +236,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: Users,
         },
     ],
-
     ECONOMIC_ENTERPRISE: [
         {
             title: "Enterprise Documents",
@@ -304,7 +243,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: BriefcaseBusiness,
         },
     ],
-
     HEALTH: [
         {
             title: "Health Office Documents",
@@ -312,7 +250,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     MSWDO: [
         {
             title: "Social Welfare Documents",
@@ -320,7 +257,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: Users,
         },
     ],
-
     AGRICULTURE: [
         {
             title: "Agriculture Documents",
@@ -328,7 +264,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: FileText,
         },
     ],
-
     MDRRMO: [
         {
             title: "Disaster Management Documents",
@@ -336,7 +271,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: ShieldCheck,
         },
     ],
-
     CIVIL_SECURITY: [
         {
             title: "Public Safety Documents",
@@ -344,7 +278,6 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: ShieldCheck,
         },
     ],
-
     OSCA: [
         {
             title: "Senior Citizens' Documents",
@@ -352,23 +285,8 @@ const officeNavItems: Record<string, NavItem[]> = {
             icon: Users,
         },
     ],
-
-    PDAO: [
-        {
-            title: "PDAO Documents",
-            href: "/admin/documents",
-            icon: Users,
-        },
-    ],
-
-    GAD: [
-        {
-            title: "GAD Documents",
-            href: "/admin/documents",
-            icon: FileText,
-        },
-    ],
-
+    PDAO: [{ title: "PDAO Documents", href: "/admin/documents", icon: Users }],
+    GAD: [{ title: "GAD Documents", href: "/admin/documents", icon: FileText }],
     YOUTH: [
         {
             title: "Youth Development Documents",
@@ -379,34 +297,48 @@ const officeNavItems: Record<string, NavItem[]> = {
 };
 
 const systemAdminNavItems: NavItem[] = [
+    { title: "Workflow Designer", href: "/admin/workflows", icon: GitBranch },
+    { title: "Office Management", href: "/admin/offices", icon: Building2 },
+    { title: "User Management", href: "/admin/users", icon: Users },
+    { title: "Activity Logs", href: "/admin/activity-logs", icon: Activity },
+];
+
+// Only for MDRRMO Operations Admin users.
+const operationsNavItems: NavItem[] = [
     {
-        title: "Workflow Designer",
-        href: "/admin/workflows",
-        icon: GitBranch,
+        title: "Operations Dashboard",
+        href: "/mdrrmo/operations",
+        icon: LayoutDashboard,
     },
     {
-        title: "Office Management",
-        href: "/admin/offices",
-        icon: Building2,
+        title: "Ambulance Fleet",
+        href: "/mdrrmo/ambulances",
+        icon: Ambulance,
     },
     {
-        title: "User Management",
-        href: "/admin/users",
+        title: "Drivers & Personnel",
+        href: "/mdrrmo/personnel",
         icon: Users,
     },
     {
-        title: "Activity Logs",
-        href: "/admin/activity-logs",
-        icon: Activity,
+        title: "Booking Requests",
+        href: "/mdrrmo/bookings",
+        icon: CalendarDays,
+    },
+    {
+        title: "Dispatch Operations",
+        href: "/mdrrmo/dispatch",
+        icon: Radio,
+    },
+    {
+        title: "Mission History",
+        href: "/mdrrmo/missions",
+        icon: History,
     },
 ];
 
 const footerNavItems: NavItem[] = [
-    {
-        title: "Settings",
-        href: "/settings/profile",
-        icon: Settings,
-    },
+    { title: "Settings", href: "/settings/profile", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -416,11 +348,19 @@ export function AppSidebar() {
     const officeCode = user?.office_code ?? "";
     const isSystemAdmin = user?.system_role === "admin";
 
-    const visibleNavItems: NavItem[] = [
-        ...commonNavItems,
-        ...(officeNavItems[officeCode] ?? []),
-        ...(isSystemAdmin ? systemAdminNavItems : []),
-    ];
+    const isMdrrmoOperationsAdmin =
+        officeCode === "MDRRMO" &&
+        user?.system_role === "mdrrmo_operations_admin";
+
+    // Operations Admin gets operations-only navigation.
+    // Other EDTS users keep their existing navigation.
+    const visibleNavItems: NavItem[] = isMdrrmoOperationsAdmin
+        ? operationsNavItems
+        : [
+              ...commonNavItems,
+              ...(officeNavItems[officeCode] ?? []),
+              ...(isSystemAdmin ? systemAdminNavItems : []),
+          ];
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -428,7 +368,14 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link
+                                href={
+                                    isMdrrmoOperationsAdmin
+                                        ? "/mdrrmo/operations"
+                                        : dashboard()
+                                }
+                                prefetch
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

@@ -15,6 +15,11 @@ use App\Http\Controllers\Admin\ProcurementController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SupplierQuotationController;
 use App\Http\Middleware\EnsureGsoOffice;
+use App\Http\Controllers\Mdrrmo\OperationsDashboardController;
+use App\Http\Middleware\EnsureMdrrmoOperationsAdmin;
+use App\Http\Controllers\Mdrrmo\AmbulanceController;
+use App\Http\Controllers\Mdrrmo\PersonnelController;
+use App\Http\Controllers\Mdrrmo\BookingRequestController;
 
 Route::inertia('/', 'welcome')->name('home');
 
@@ -216,6 +221,50 @@ Route::middleware(['auth'])
                 [SupplierQuotationController::class, 'destroy']
             )->name('procurement.quotations.destroy');
         });
+
     });
+
+    // MDRRMO Operations Admin-only routes
+    Route::middleware([
+        'auth',
+        EnsureMdrrmoOperationsAdmin::class,
+    ])
+        ->prefix('mdrrmo')
+        ->name('mdrrmo.')
+        ->group(function () {
+            Route::get('/operations', OperationsDashboardController::class)
+                ->name('operations.dashboard');
+                
+            Route::resource('ambulances', AmbulanceController::class);
+            
+
+            Route::resource('personnel', PersonnelController::class)
+                ->except(['create', 'edit', 'destroy']);
+
+            Route::patch(
+                '/personnel/{personnel}/deactivate',
+                [PersonnelController::class, 'deactivate']
+            )->name('personnel.deactivate');
+
+            Route::patch(
+                '/personnel/{personnel}/reactivate',
+                [PersonnelController::class, 'reactivate']
+            )->name('personnel.reactivate');
+
+            Route::get('/bookings', [BookingRequestController::class, 'index'])
+                ->name('bookings.index');
+
+            Route::post('/bookings', [BookingRequestController::class, 'store'])
+                ->name('bookings.store');
+
+            Route::get('/bookings/{booking}', [BookingRequestController::class, 'show'])
+                ->name('bookings.show');
+
+            Route::patch('/bookings/{booking}/approve', [BookingRequestController::class, 'approve'])
+                ->name('bookings.approve');
+
+            Route::patch('/bookings/{booking}/reject', [BookingRequestController::class, 'reject'])
+                ->name('bookings.reject');
+        });
 
 require __DIR__ . '/settings.php';
