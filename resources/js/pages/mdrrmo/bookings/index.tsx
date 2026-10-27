@@ -1512,7 +1512,7 @@ function IconButton({
 BookingRequestsIndex.layout = {
     breadcrumbs: [
         {
-            title: "Booking Requests",
+            title: "Booking Request",
             href: "/mdrrmo/bookings",
         },
     ],
