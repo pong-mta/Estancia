@@ -28,6 +28,8 @@ type Reviewer = {
     name: string;
 };
 
+type PatientPosition = "standard" | "lying";
+
 type Booking = {
     id: number;
     request_number: string;
@@ -37,6 +39,7 @@ type Booking = {
     purpose: string;
     purpose_details: string | null;
     passenger_count: number;
+    patient_position: PatientPosition | null;
     pickup_address: string;
     pickup_barangay: string | null;
     destination_address: string;
@@ -90,6 +93,7 @@ type CreateBookingData = {
     purpose: string;
     purpose_details: string;
     passenger_count: string;
+    patient_position: PatientPosition;
     pickup_address: string;
     pickup_barangay: string;
     destination_address: string;
@@ -111,6 +115,69 @@ type RejectData = {
 const inputClass =
     "mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
 
+const PHONE_ERROR =
+    "Enter a valid Philippine mobile number, e.g. 09171234567 or +639171234567.";
+const EMAIL_ERROR = "Enter a valid email address, e.g. name@example.com.";
+
+// 09XXXXXXXXX or +639XXXXXXXXX
+const PH_MOBILE_REGEX = /^(?:09|\+639)\d{9}$/;
+
+// local@domain.tld: no spaces, no leading/trailing dots or hyphens, TLD of 2+ letters
+const EMAIL_REGEX =
+    /^[A-Za-z0-9](?:[A-Za-z0-9._%+-]{0,62}[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/;
+
+const POSITION_OPTIONS: {
+    value: PatientPosition;
+    label: string;
+    description: string;
+}[] = [
+    {
+        value: "standard",
+        label: "Standard position",
+        description: "Patient can sit upright during transport.",
+    },
+    {
+        value: "lying",
+        label: "Lying position",
+        description: "Patient must lie flat on a stretcher during transport.",
+    },
+];
+
+// Keeps only digits (and a single leading "+"), capped at the max valid length.
+function sanitizePhoneInput(value: string) {
+    const cleaned = value.replace(/[^\d+]/g, "");
+    const hasPlus = cleaned.startsWith("+");
+    const digits = cleaned.replace(/\+/g, "").slice(0, hasPlus ? 12 : 11);
+
+    return hasPlus ? `+${digits}` : digits;
+}
+
+function isValidPhMobile(value: string) {
+    return PH_MOBILE_REGEX.test(value.trim());
+}
+
+// +639171234567 -> 09171234567, so stored numbers are consistent
+function normalizePhMobile(value: string) {
+    return value.trim().replace(/^\+63/, "0");
+}
+
+// Email is optional, but if filled in it must be valid.
+function isValidEmail(value: string) {
+    const email = value.trim();
+
+    if (email === "") return true;
+
+    return (
+        email.length <= 150 && !email.includes("..") && EMAIL_REGEX.test(email)
+    );
+}
+
+function positionLabel(value: PatientPosition | null | undefined) {
+    return (
+        POSITION_OPTIONS.find((option) => option.value === value)?.label ?? "—"
+    );
+}
+
 export default function BookingRequestsIndex({
     bookings,
     filters,
@@ -124,6 +191,7 @@ export default function BookingRequestsIndex({
     const [createOpen, setCreateOpen] = useState(false);
     const [selected, setSelected] = useState<Booking | null>(null);
     const [modal, setModal] = useState<"view" | "reject" | null>(null);
+    const [touched, setTouched] = useState({ phone: false, email: false });
 
     const createForm = useForm<CreateBookingData>({
         requester_name: "",
@@ -132,6 +200,7 @@ export default function BookingRequestsIndex({
         purpose: "medical",
         purpose_details: "",
         passenger_count: "1",
+        patient_position: "standard",
         pickup_address: "",
         pickup_barangay: "",
         destination_address: "",
@@ -149,6 +218,16 @@ export default function BookingRequestsIndex({
         rejection_reason: "",
         internal_notes: "",
     });
+
+    const phoneError =
+        touched.phone && !isValidPhMobile(createForm.data.requester_phone)
+            ? PHONE_ERROR
+            : undefined;
+
+    const emailError =
+        touched.email && !isValidEmail(createForm.data.requester_email)
+            ? EMAIL_ERROR
+            : undefined;
 
     function applyFilters(event?: FormEvent) {
         event?.preventDefault();
@@ -187,6 +266,7 @@ export default function BookingRequestsIndex({
     function openCreateModal() {
         createForm.reset();
         createForm.clearErrors();
+        setTouched({ phone: false, email: false });
         setCreateOpen(true);
     }
 
@@ -194,10 +274,26 @@ export default function BookingRequestsIndex({
         setCreateOpen(false);
         createForm.reset();
         createForm.clearErrors();
+        setTouched({ phone: false, email: false });
     }
 
     function submitCreateBooking(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
+
+        if (
+            !isValidPhMobile(createForm.data.requester_phone) ||
+            !isValidEmail(createForm.data.requester_email)
+        ) {
+            setTouched({ phone: true, email: true });
+            toast.error("Please correct the highlighted fields.");
+            return;
+        }
+
+        createForm.transform((data) => ({
+            ...data,
+            requester_phone: normalizePhMobile(data.requester_phone),
+            requester_email: data.requester_email.trim(),
+        }));
 
         createForm.post("/mdrrmo/bookings", {
             preserveScroll: true,
@@ -541,6 +637,11 @@ export default function BookingRequestsIndex({
                                                         ? ""
                                                         : "s"}
                                                 </p>
+                                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                                    {positionLabel(
+                                                        booking.patient_position,
+                                                    )}
+                                                </p>
                                             </td>
 
                                             <td className="px-5 py-4">
@@ -669,44 +770,84 @@ export default function BookingRequestsIndex({
                                         label="Contact number"
                                         required
                                         error={
-                                            createForm.errors.requester_phone
+                                            createForm.errors.requester_phone ??
+                                            phoneError
                                         }
                                     >
                                         <input
                                             required
-                                            maxLength={30}
+                                            type="tel"
+                                            inputMode="tel"
+                                            autoComplete="tel"
+                                            maxLength={13}
+                                            pattern="(09|\+639)[0-9]{9}"
+                                            title="Use 09XXXXXXXXX or +639XXXXXXXXX"
                                             value={
                                                 createForm.data.requester_phone
                                             }
-                                            onChange={(e) =>
+                                            onChange={(e) => {
+                                                createForm.clearErrors(
+                                                    "requester_phone",
+                                                );
                                                 createForm.setData(
                                                     "requester_phone",
-                                                    e.target.value,
-                                                )
+                                                    sanitizePhoneInput(
+                                                        e.target.value,
+                                                    ),
+                                                );
+                                            }}
+                                            onBlur={() =>
+                                                setTouched((t) => ({
+                                                    ...t,
+                                                    phone: true,
+                                                }))
                                             }
+                                            aria-invalid={Boolean(
+                                                createForm.errors
+                                                    .requester_phone ??
+                                                    phoneError,
+                                            )}
                                             className={inputClass}
-                                            placeholder="09XXXXXXXXX"
+                                            placeholder="09XXXXXXXXX or +639XXXXXXXXX"
                                         />
                                     </FormField>
 
                                     <FormField
                                         label="Email address"
                                         error={
-                                            createForm.errors.requester_email
+                                            createForm.errors.requester_email ??
+                                            emailError
                                         }
                                     >
                                         <input
                                             type="email"
+                                            inputMode="email"
+                                            autoComplete="email"
+                                            spellCheck={false}
                                             maxLength={150}
                                             value={
                                                 createForm.data.requester_email
                                             }
-                                            onChange={(e) =>
+                                            onChange={(e) => {
+                                                createForm.clearErrors(
+                                                    "requester_email",
+                                                );
                                                 createForm.setData(
                                                     "requester_email",
-                                                    e.target.value,
-                                                )
+                                                    e.target.value.trim(),
+                                                );
+                                            }}
+                                            onBlur={() =>
+                                                setTouched((t) => ({
+                                                    ...t,
+                                                    email: true,
+                                                }))
                                             }
+                                            aria-invalid={Boolean(
+                                                createForm.errors
+                                                    .requester_email ??
+                                                    emailError,
+                                            )}
                                             className={inputClass}
                                             placeholder="Optional email"
                                         />
@@ -934,6 +1075,19 @@ export default function BookingRequestsIndex({
                                             className={inputClass}
                                         />
                                     </FormField>
+
+                                    <PositionField
+                                        value={createForm.data.patient_position}
+                                        onChange={(value) =>
+                                            createForm.setData(
+                                                "patient_position",
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            createForm.errors.patient_position
+                                        }
+                                    />
                                 </div>
                             </section>
 
@@ -1137,6 +1291,12 @@ export default function BookingRequestsIndex({
                                     <Detail
                                         label="Purpose details"
                                         value={selected.purpose_details}
+                                    />
+                                    <Detail
+                                        label="Patient position"
+                                        value={positionLabel(
+                                            selected.patient_position,
+                                        )}
                                     />
                                     <Detail
                                         label="Pickup address"
@@ -1371,6 +1531,66 @@ function FormField({
                 </span>
             )}
         </label>
+    );
+}
+
+function PositionField({
+    value,
+    onChange,
+    error,
+}: {
+    value: PatientPosition;
+    onChange: (value: PatientPosition) => void;
+    error?: string;
+}) {
+    return (
+        <fieldset className="min-w-0 md:col-span-2">
+            <legend className="text-sm font-medium">
+                Patient position
+                <span className="ml-1 text-destructive">*</span>
+            </legend>
+
+            <div className="mt-1.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {POSITION_OPTIONS.map((option) => {
+                    const active = value === option.value;
+
+                    return (
+                        <label
+                            key={option.value}
+                            className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
+                                active
+                                    ? "border-primary bg-primary/5 ring-2 ring-primary/15"
+                                    : "border-input hover:bg-muted/50"
+                            }`}
+                        >
+                            <input
+                                type="radio"
+                                name="patient_position"
+                                value={option.value}
+                                checked={active}
+                                onChange={() => onChange(option.value)}
+                                required
+                                className="mt-0.5 size-4 accent-primary"
+                            />
+                            <span>
+                                <span className="block text-sm font-medium">
+                                    {option.label}
+                                </span>
+                                <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                                    {option.description}
+                                </span>
+                            </span>
+                        </label>
+                    );
+                })}
+            </div>
+
+            {error && (
+                <span className="mt-1 block text-xs text-destructive">
+                    {error}
+                </span>
+            )}
+        </fieldset>
     );
 }
 
