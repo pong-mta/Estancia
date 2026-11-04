@@ -721,7 +721,7 @@ export default function BookingRequestsIndex({
             {/* Create booking modal */}
             {createOpen && (
                 <ModalShell
-                    title="Create Booking Request"
+                    title="Create Booking Requestxxx"
                     subtitle="Register a booking received by MDRRMO."
                     icon={<Plus className="size-5" />}
                     onClose={closeCreateModal}
@@ -805,7 +805,7 @@ export default function BookingRequestsIndex({
                                             aria-invalid={Boolean(
                                                 createForm.errors
                                                     .requester_phone ??
-                                                    phoneError,
+                                                phoneError,
                                             )}
                                             className={inputClass}
                                             placeholder="09XXXXXXXXX or +639XXXXXXXXX"
@@ -846,7 +846,7 @@ export default function BookingRequestsIndex({
                                             aria-invalid={Boolean(
                                                 createForm.errors
                                                     .requester_email ??
-                                                    emailError,
+                                                emailError,
                                             )}
                                             className={inputClass}
                                             placeholder="Optional email"
