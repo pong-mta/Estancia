@@ -56,7 +56,7 @@ class DepartmentTestUsersSeeder extends Seeder
             ],
             [
                 'code' => 'MDRRMO',
-                'email' => 'mdrrmo.operations@edts.local',
+                'email' => '',
                 'name' => 'MDRRMO Operations Admin',
                 'role' => 'mdrrmo_operations_admin',
             ],
@@ -66,7 +66,7 @@ class DepartmentTestUsersSeeder extends Seeder
             ['code' => 'GAD', 'email' => 'gad@edts.local', 'name' => 'Gender and Development Office'],
             ['code' => 'YOUTH', 'email' => 'youth@edts.local', 'name' => 'Youth Development Office'],
         ];
-
+mdrrmo.operations@edts.local
         $adminEmail = env('EDTS_ADMIN_EMAIL', 'admin@edts.local');
 
         foreach ($departments as $department) {
