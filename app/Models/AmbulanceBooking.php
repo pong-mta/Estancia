@@ -13,11 +13,16 @@ class AmbulanceBooking extends Model
 
     protected $table = 'ambulance_bookings';
 
+    // Booking statuses
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPROVED = 'approved';
     public const STATUS_REJECTED = 'rejected';
     public const STATUS_CANCELLED = 'cancelled';
     public const STATUS_COMPLETED = 'completed';
+
+    // Patient transport positions
+    public const POSITION_STANDARD = 'standard';
+    public const POSITION_LYING = 'lying';
 
     protected $fillable = [
         'request_number',
@@ -27,6 +32,7 @@ class AmbulanceBooking extends Model
         'purpose',
         'purpose_details',
         'passenger_count',
+        'patient_position',
         'pickup_address',
         'pickup_barangay',
         'destination_address',
@@ -50,6 +56,9 @@ class AmbulanceBooking extends Model
         ];
     }
 
+    /**
+     * Available booking statuses.
+     */
     public static function statuses(): array
     {
         return [
@@ -61,16 +70,36 @@ class AmbulanceBooking extends Model
         ];
     }
 
+    /**
+     * Available patient transport positions.
+     */
+    public static function patientPositions(): array
+    {
+        return [
+            self::POSITION_STANDARD => 'Standard Position',
+            self::POSITION_LYING => 'Lying Position',
+        ];
+    }
+
+    /**
+     * Booking reviewer relationship.
+     */
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    /**
+     * Check whether booking is pending.
+     */
     public function isPending(): bool
     {
         return $this->status === self::STATUS_PENDING;
     }
 
+    /**
+     * Check whether booking can be reviewed.
+     */
     public function canBeReviewed(): bool
     {
         return $this->isPending();

@@ -12,6 +12,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
+
 class BookingRequestController extends Controller
 {
     public function index(Request $request): Response
@@ -62,60 +63,165 @@ class BookingRequestController extends Controller
         ]);
     }
 
-    /**
-     * Create a booking manually from the MDRRMO Operations Admin interface.
-     * Every newly created request remains pending until explicitly reviewed.
-     */
+    
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'requester_name' => ['required', 'string', 'max:150'],
-            'requester_phone' => ['required', 'string', 'max:30'],
-            'requester_email' => ['nullable', 'email', 'max:150'],
+            // Requester information
+            'requester_name' => [
+                'required',
+                'string',
+                'max:150',
+            ],
+            'requester_phone' => [
+                'required',
+                'string',
+                'max:30',
+            ],
+            'requester_email' => [
+                'nullable',
+                'email',
+                'max:150',
+            ],
+
+            // Booking purpose
             'purpose' => [
                 'required',
                 'string',
-                Rule::in(['medical', 'emergency', 'hospital_transfer', 'inter_facility_transfer', 'other']),
+                Rule::in([
+                    'medical',
+                    'emergency',
+                    'hospital_transfer',
+                    'inter_facility_transfer',
+                    'other',
+                ]),
             ],
-            'purpose_details' => ['nullable', 'string', 'max:1000'],
-            'passenger_count' => ['required', 'integer', 'min:1', 'max:100'],
-            'pickup_address' => ['required', 'string', 'max:2000'],
-            'pickup_barangay' => ['nullable', 'string', 'max:100'],
-            'destination_address' => ['required', 'string', 'max:2000'],
-            'destination_barangay' => ['nullable', 'string', 'max:100'],
-            'requested_date' => ['required', 'date_format:Y-m-d'],
-            'requested_time' => ['required', 'date_format:H:i'],
-            'internal_notes' => ['nullable', 'string', 'max:5000'],
+            'purpose_details' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
+
+            // Patient and passenger information
+            'passenger_count' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+            'patient_position' => [
+                'required',
+                'string',
+                Rule::in([
+                    AmbulanceBooking::POSITION_STANDARD,
+                    AmbulanceBooking::POSITION_LYING,
+                ]),
+            ],
+
+            // Pickup location
+            'pickup_address' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+            'pickup_barangay' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            // Destination
+            'destination_address' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+            'destination_barangay' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            // Requested schedule
+            'requested_date' => [
+                'required',
+                'date_format:Y-m-d',
+            ],
+            'requested_time' => [
+                'required',
+                'date_format:H:i',
+            ],
+
+            // Internal MDRRMO notes
+            'internal_notes' => [
+                'nullable',
+                'string',
+                'max:5000',
+            ],
         ]);
 
         $booking = DB::transaction(function () use ($validated) {
+
+            // Generate unique ambulance request number
             do {
-                $requestNumber = 'AMB-' . now()->format('Ymd') . '-' . Str::upper(Str::random(6));
-            } while (AmbulanceBooking::where('request_number', $requestNumber)->exists());
+                $requestNumber = 'AMB-' .
+                    now()->format('Ymd') .
+                    '-' .
+                    Str::upper(Str::random(6));
+
+            } while (
+                AmbulanceBooking::where(
+                    'request_number',
+                    $requestNumber
+                )->exists()
+            );
 
             return AmbulanceBooking::create([
                 'request_number' => $requestNumber,
+
+                // Requester
                 'requester_name' => trim($validated['requester_name']),
                 'requester_phone' => trim($validated['requester_phone']),
-                'requester_email' => isset($validated['requester_email']) ? trim($validated['requester_email']) : null,
+                'requester_email' => isset($validated['requester_email'])
+                    ? trim($validated['requester_email'])
+                    : null,
+
+                // Booking purpose
                 'purpose' => $validated['purpose'],
                 'purpose_details' => $validated['purpose_details'] ?? null,
+
+                // Patient information
                 'passenger_count' => $validated['passenger_count'],
+                'patient_position' => $validated['patient_position'],
+
+                // Pickup location
                 'pickup_address' => trim($validated['pickup_address']),
                 'pickup_barangay' => $validated['pickup_barangay'] ?? null,
+
+                // Destination
                 'destination_address' => trim($validated['destination_address']),
                 'destination_barangay' => $validated['destination_barangay'] ?? null,
+
+                // Schedule
                 'requested_date' => $validated['requested_date'],
                 'requested_time' => $validated['requested_time'] . ':00',
+
+                // Workflow
                 'status' => AmbulanceBooking::STATUS_PENDING,
+
+                // Internal notes
                 'internal_notes' => $validated['internal_notes'] ?? null,
             ]);
         });
 
         return redirect()
             ->route('mdrrmo.bookings.index')
-            ->with('success', "Booking {$booking->request_number} created and placed in Pending Review.");
+            ->with(
+                'success',
+                "Booking {$booking->request_number} created and placed in Pending Review."
+            );
     }
+
 
     public function show(AmbulanceBooking $booking): Response
     {
