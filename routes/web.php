@@ -268,6 +268,6 @@ Route::middleware(['auth'])
         });
 
 
-        // Route::post('/bookings/public', [BookingRequestController::class, 'store']);
+        Route::post('/bookings/public', [BookingRequestController::class, 'store']);
 
 require __DIR__ . '/settings.php';
