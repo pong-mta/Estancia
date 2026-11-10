@@ -268,6 +268,14 @@ Route::middleware(['auth'])
         });
 
 
-        Route::post('/bookings/public', [BookingRequestController::class, 'store']);
+        // Public MDRRMO Ambulance Booking
+        Route::match(['OPTIONS'], '/bookings/public', function () {
+            return response()->noContent();
+        });
+
+        Route::post('/bookings/public', [
+            BookingRequestController::class,
+            'store',
+        ])->name('mdrrmo.bookings.public');
 
 require __DIR__ . '/settings.php';

@@ -4,7 +4,7 @@ return [
     'paths' => [
         'api/*',
         'bookings/*',
-        'mdrrmo/bookings/*',
+        'mdrrmo/*',
         'sanctum/csrf-cookie',
     ],
 
