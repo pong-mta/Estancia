@@ -1,10 +1,11 @@
 <?php
 
 return [
-
     'paths' => [
         'api/*',
-        'mdrrmo/bookings/public',
+        'bookings/*',
+        'mdrrmo/bookings/*',
+        'sanctum/csrf-cookie',
     ],
 
     'allowed_methods' => ['*'],
@@ -21,6 +22,5 @@ return [
 
     'max_age' => 86400,
 
-    'supports_credentials' => true,
-
+    'supports_credentials' => false,
 ];
