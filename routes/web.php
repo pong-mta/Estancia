@@ -267,4 +267,7 @@ Route::middleware(['auth'])
                 ->name('bookings.reject');
         });
 
+
+        Route::post('/bookings/public', [BookingRequestController::class, 'store']);
+
 require __DIR__ . '/settings.php';
