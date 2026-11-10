@@ -34,5 +34,7 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-
+    'public_booking' => [
+        'key' => env('PUBLIC_BOOKING_API_KEY'),
+        ],
 ];
