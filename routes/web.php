@@ -277,6 +277,8 @@ Route::middleware(['auth'])
         Route::post('/bookings/public', [
             BookingRequestController::class,
             'store',
-        ])->name('mdrrmo.bookings.public');
+        ])
+            ->middleware('throttle:10,1')
+            ->name('mdrrmo.bookings.public');
 
 require __DIR__ . '/settings.php';
