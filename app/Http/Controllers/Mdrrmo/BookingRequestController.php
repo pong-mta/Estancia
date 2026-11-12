@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\JsonResponse;
 
 
 class BookingRequestController extends Controller
@@ -64,7 +65,7 @@ class BookingRequestController extends Controller
     }
 
     
-    public function store(Request $request): RedirectResponse
+public function store(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             // Requester information
@@ -214,6 +215,17 @@ class BookingRequestController extends Controller
             ]);
         });
 
+        // Public booking portal: return JSON.
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Ambulance booking request submitted successfully.',
+                'request_number' => $booking->request_number,
+                'status' => $booking->status,
+            ], 201);
+        }
+
+        // Internal MDRRMO staff: retain normal redirect.
         return redirect()
             ->route('mdrrmo.bookings.index')
             ->with(

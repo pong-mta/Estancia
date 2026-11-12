@@ -273,6 +273,7 @@ Route::middleware(['auth'])
             return response()->noContent();
         });
 
+        // Public MDRRMO Ambulance Booking
         Route::post('/bookings/public', [
             BookingRequestController::class,
             'store',
