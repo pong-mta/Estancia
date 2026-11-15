@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MdrrmoPersonnel extends Model
 {
@@ -104,5 +105,13 @@ class MdrrmoPersonnel extends Model
     public function canBeAssigned(): bool
     {
         return $this->isAvailable();
+    }
+
+    /**
+     * Operation assignments connected to this personnel.
+     */
+    public function operationAssignments(): HasMany
+    {
+        return $this->hasMany(OperationPersonnel::class, 'personnel_id');
     }
 }

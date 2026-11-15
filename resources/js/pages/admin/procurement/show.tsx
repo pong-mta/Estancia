@@ -96,7 +96,7 @@ export default function ProcurementShow({ procurement, suppliers }: Props) {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-xl border bg-card p-4"><p className="text-sm text-muted-foreground">Originating office</p><p className="mt-1 font-semibold">{pr.originatingOffice?.name ?? '—'}</p></div>
+                    <div className="rounded-xl border bg-card p-4"><p className="text-sm text-muted-foreground">Originating office</p><p className="mt-1 font-semibold">{pr.originating_office?.name ?? '—'}</p></div>
                     <div className="rounded-xl border bg-card p-4"><p className="text-sm text-muted-foreground">Requested items</p><p className="mt-1 text-2xl font-semibold">{items.length}</p></div>
                     <div className="rounded-xl border bg-card p-4"><p className="text-sm text-muted-foreground">Budget amount</p><p className="mt-1 text-xl font-semibold">{money(pr.budget_amount)}</p></div>
                     <div className="rounded-xl border bg-card p-4"><p className="text-sm text-muted-foreground">Quotations received</p><p className="mt-1 text-2xl font-semibold">{procurement.quotations.length}</p></div>

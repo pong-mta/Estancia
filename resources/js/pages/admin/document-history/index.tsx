@@ -124,7 +124,7 @@ export default function DocumentHistoryIndex({ documents, filters }: Props) {
 
                     <button
                         type="button"
-                        onClick={() => router.reload({ preserveScroll: true })}
+                        onClick={() => router.reload()}
                         className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition hover:bg-muted"
                     >
                         <RotateCcw className="size-4" />

@@ -84,8 +84,13 @@ class Ambulance extends Model
      * Booking relationship will be enabled when the
      * AmbulanceBooking model and its foreign key exist.
      */
-    public function bookings(): HasMany
+    // public function bookings(): HasMany
+    // {
+    //     return $this->hasMany(AmbulanceBooking::class);
+    // }
+
+    public function operationAssignments(): HasMany
     {
-        return $this->hasMany(AmbulanceBooking::class);
+    return $this->hasMany(OperationAmbulance::class);
     }
 }

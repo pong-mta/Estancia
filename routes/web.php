@@ -20,6 +20,8 @@ use App\Http\Middleware\EnsureMdrrmoOperationsAdmin;
 use App\Http\Controllers\Mdrrmo\AmbulanceController;
 use App\Http\Controllers\Mdrrmo\PersonnelController;
 use App\Http\Controllers\Mdrrmo\BookingRequestController;
+use App\Http\Controllers\Mdrrmo\OperationController;
+
 
 Route::inertia('/', 'welcome')->name('home');
 
@@ -235,8 +237,12 @@ Route::middleware(['auth'])
             Route::get('/operations', OperationsDashboardController::class)
                 ->name('operations.dashboard');
                 
+            // Dispatch Operations
+            Route::get('/dispatch', [OperationController::class, 'index'])
+                ->name('dispatch.index');
+
             Route::resource('ambulances', AmbulanceController::class);
-            
+
 
             Route::resource('personnel', PersonnelController::class)
                 ->except(['create', 'edit', 'destroy']);
@@ -265,6 +271,46 @@ Route::middleware(['auth'])
 
             Route::patch('/bookings/{booking}/reject', [BookingRequestController::class, 'reject'])
                 ->name('bookings.reject');
+
+             // Operations Management
+            Route::get('/operations/manage', [OperationController::class, 'index'])
+                ->name('operations.index');
+
+            Route::post('/operations', [OperationController::class, 'store'])
+                ->name('operations.store');
+
+            Route::get('/operations/{operation}', [OperationController::class, 'show'])
+                ->name('operations.show');
+
+            Route::post('/operations/{operation}/assign-resources', [
+                OperationController::class,
+                'assignResources',
+            ])->name('operations.assign-resources');
+
+            Route::patch('/operations/{operation}/dispatch', [
+                OperationController::class,
+                'dispatch',
+            ])->name('operations.dispatch');
+
+            Route::patch('/operations/{operation}/start', [
+                OperationController::class,
+                'start',
+            ])->name('operations.start');
+
+            Route::patch('/operations/{operation}/complete', [
+                OperationController::class,
+                'complete',
+            ])->name('operations.complete');
+
+            Route::patch('/operations/{operation}/cancel', [
+                OperationController::class,
+                'cancel',
+            ])->name('operations.cancel');
+
+            Route::patch('/operations/{operation}/resources', [
+                OperationController::class,
+                'updateResources',
+            ])->name('operations.update-resources');
         });
 
 
@@ -280,5 +326,7 @@ Route::middleware(['auth'])
         ])
             ->middleware('throttle:10,1')
             ->name('mdrrmo.bookings.public');
+
+
 
 require __DIR__ . '/settings.php';
