@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AmbulanceBooking extends Model
 {
@@ -103,5 +104,13 @@ class AmbulanceBooking extends Model
     public function canBeReviewed(): bool
     {
         return $this->isPending();
+    }
+
+    /**
+ * Operation created from this booking.
+ */
+    public function operation(): HasOne
+    {
+        return $this->hasOne(Operation::class, 'booking_id');
     }
 }
