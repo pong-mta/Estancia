@@ -101,10 +101,13 @@ class MdrrmoPersonnel extends Model
         return $this->employment_status === self::EMPLOYMENT_ACTIVE
             && $this->availability_status === self::AVAILABILITY_AVAILABLE;
     }
-
     public function canBeAssigned(): bool
     {
-        return $this->isAvailable();
+        return $this->employment_status === self::EMPLOYMENT_ACTIVE
+            && in_array($this->availability_status, [
+                self::AVAILABILITY_AVAILABLE,
+                self::AVAILABILITY_ON_DUTY,
+            ], true);
     }
 
     /**

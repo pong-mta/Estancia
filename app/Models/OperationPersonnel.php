@@ -14,6 +14,7 @@ class OperationPersonnel extends Model
         'operation_id',
         'personnel_id',
         'assignment_role',
+        'previous_availability_status',
         'assigned_at',
         'released_at',
     ];

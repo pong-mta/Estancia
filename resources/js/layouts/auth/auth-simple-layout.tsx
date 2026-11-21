@@ -9,30 +9,54 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
-                        <Link
-                            href={home()}
-                            className="flex flex-col items-center gap-2 font-medium"
-                        >
-                            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                                <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                            </div>
-                            <span className="sr-only">{title}</span>
+        <main className="relative flex min-h-svh items-center justify-center overflow-hidden bg-slate-950 px-4 py-10 text-white sm:px-6">
+            <div className="pointer-events-none absolute inset-0">
+                <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-red-600/10 blur-3xl" />
+                <div className="absolute -bottom-40 -right-24 h-[30rem] w-[30rem] rounded-full bg-blue-500/10 blur-3xl" />
+                <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.2) 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
+            </div>
+
+            <div className="relative z-10 grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/40 lg:grid-cols-2">
+                <section className="hidden flex-col justify-between bg-gradient-to-br from-red-700 via-red-800 to-slate-950 p-10 lg:flex">
+                    <Link href={home()} className="inline-flex w-fit items-center gap-3">
+                        <AppLogoIcon className="h-12 w-12 text-white" />
+                        <span>
+                            <span className="block text-sm font-bold tracking-[0.16em]">ESTANCIA MDRRMO</span>
+                            <span className="block text-xs text-red-100/70">Emergency Operations System</span>
+                        </span>
+                    </Link>
+                    <div className="max-w-sm">
+                        <p className="text-xs font-semibold tracking-[0.22em] text-red-100/70">PUBLIC SAFETY • RESPONSE • COORDINATION</p>
+                        <h1 className="mt-5 text-4xl font-bold leading-tight">Ready to respond. Ready to serve.</h1>
+                        <p className="mt-5 text-sm leading-7 text-red-50/80">A centralized workspace for coordinating emergency resources, personnel, service requests, and response operations.</p>
+                    </div>
+                    <p className="text-xs text-red-100/60">Estancia, Iloilo • Authorized personnel access</p>
+                </section>
+
+                <section className="flex items-center justify-center bg-slate-900 px-6 py-10 sm:px-10">
+                    <div className="w-full max-w-sm">
+                        <Link href={home()} className="mb-8 flex items-center justify-center gap-3 lg:hidden">
+                            <AppLogoIcon className="h-11 w-11 text-red-500" />
+                            <span>
+                                <span className="block text-sm font-bold tracking-[0.14em] text-white">ESTANCIA MDRRMO</span>
+                                <span className="block text-xs text-slate-400">Emergency Operations System</span>
+                            </span>
                         </Link>
 
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">
-                                {description}
-                            </p>
+                        <div className="mb-8">
+                            <p className="text-xs font-semibold tracking-[0.2em] text-red-400">SECURE SYSTEM ACCESS</p>
+                            <h2 className="mt-3 text-2xl font-bold text-white">{title}</h2>
+                            <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
                         </div>
+
+                        <div className="[&_label]:text-slate-200 [&_input]:border-white/10 [&_input]:bg-slate-950 [&_input]:text-white [&_input]:placeholder:text-slate-500 [&_a]:text-red-400 [&_a:hover]:text-red-300 [&_button]:bg-red-600 [&_button]:text-white [&_button:hover]:bg-red-500">
+                            {children}
+                        </div>
+
+                        <p className="mt-8 text-center text-xs text-slate-500">Authorized access only. Please keep your credentials secure.</p>
                     </div>
-                    {children}
-                </div>
+                </section>
             </div>
-        </div>
+        </main>
     );
 }
