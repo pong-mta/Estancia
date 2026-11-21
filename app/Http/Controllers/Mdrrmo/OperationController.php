@@ -145,7 +145,10 @@ class OperationController extends Controller
                 ->get(),
             'availablePersonnel' => MdrrmoPersonnel::query()
                 ->where('employment_status', MdrrmoPersonnel::EMPLOYMENT_ACTIVE)
-                ->where('availability_status', MdrrmoPersonnel::AVAILABILITY_AVAILABLE)
+                ->whereIn('availability_status', [
+                    MdrrmoPersonnel::AVAILABILITY_AVAILABLE,
+                    MdrrmoPersonnel::AVAILABILITY_ON_DUTY,
+                ])
                 ->orderBy('last_name')
                 ->get(),
         ]);
@@ -501,6 +504,7 @@ class OperationController extends Controller
 
         foreach ($personnelIds as $id) {
             $member = $members->get($id);
+
             $existing = OperationPersonnel::query()
                 ->where('operation_id', $operation->id)
                 ->where('personnel_id', $id)
@@ -522,6 +526,9 @@ class OperationController extends Controller
                 ]);
             }
 
+            // Save the original availability before changing it to assigned.
+            $previousAvailability = $member->availability_status;
+
             $member->update([
                 'availability_status' => MdrrmoPersonnel::AVAILABILITY_ASSIGNED,
             ]);
@@ -529,6 +536,7 @@ class OperationController extends Controller
             if ($existing) {
                 $existing->update([
                     'assignment_role' => $member->role,
+                    'previous_availability_status' => $previousAvailability,
                     'assigned_at' => now(),
                     'released_at' => null,
                 ]);
@@ -537,6 +545,7 @@ class OperationController extends Controller
                     'operation_id' => $operation->id,
                     'personnel_id' => $member->id,
                     'assignment_role' => $member->role,
+                    'previous_availability_status' => $previousAvailability,
                     'assigned_at' => now(),
                 ]);
             }
@@ -628,7 +637,10 @@ class OperationController extends Controller
 
                 if ($assignment) {
                     $assignment->update(['released_at' => now()]);
-                    $this->makePersonnelAvailableIfReleased($members->get($currentId));
+                    $this->makePersonnelAvailableIfReleased(
+                        $members->get($currentId),
+                        $assignment
+                    );
                 }
             }
         }
@@ -705,8 +717,10 @@ class OperationController extends Controller
     /**
      * Restore personnel only if still assigned and not assigned elsewhere.
      */
-    private function makePersonnelAvailableIfReleased(?MdrrmoPersonnel $member): void
-    {
+    private function makePersonnelAvailableIfReleased(
+        ?MdrrmoPersonnel $member,
+        ?OperationPersonnel $assignment = null
+    ): void {
         if (
             ! $member
             || $member->availability_status !== MdrrmoPersonnel::AVAILABILITY_ASSIGNED
@@ -726,8 +740,19 @@ class OperationController extends Controller
             ->exists();
 
         if (! $hasOtherActiveAssignment) {
+            // Restore the status recorded when this personnel member was assigned.
+            $previousAvailability = $assignment?->previous_availability_status
+                ?? MdrrmoPersonnel::AVAILABILITY_AVAILABLE;
+
+            if (! in_array($previousAvailability, [
+                MdrrmoPersonnel::AVAILABILITY_AVAILABLE,
+                MdrrmoPersonnel::AVAILABILITY_ON_DUTY,
+            ], true)) {
+                $previousAvailability = MdrrmoPersonnel::AVAILABILITY_AVAILABLE;
+            }
+
             $member->update([
-                'availability_status' => MdrrmoPersonnel::AVAILABILITY_AVAILABLE,
+                'availability_status' => $previousAvailability,
             ]);
         }
     }
@@ -771,7 +796,10 @@ class OperationController extends Controller
 
         foreach ($personnelAssignments as $assignment) {
             $assignment->update(['released_at' => now()]);
-            $this->makePersonnelAvailableIfReleased($members->get($assignment->personnel_id));
+            $this->makePersonnelAvailableIfReleased(
+                $members->get($assignment->personnel_id),
+                $assignment
+            );
         }
     }
 

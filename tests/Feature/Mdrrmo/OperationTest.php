@@ -392,3 +392,72 @@ test('resources can be assigned to another operation after their previous operat
         ->and($ambulance->fresh()->status)->toBe(Ambulance::STATUS_ASSIGNED)
         ->and($personnel->fresh()->availability_status)->toBe(MdrrmoPersonnel::AVAILABILITY_ASSIGNED);
 });
+
+test('administrator can assign personnel who are on duty', function () {
+    $operation = makeOperation();
+    $ambulance = makeAvailableAmbulance();
+    $personnel = makeAvailablePersonnel();
+
+    $personnel->update([
+        'availability_status' => MdrrmoPersonnel::AVAILABILITY_ON_DUTY,
+    ]);
+
+    $this->post(route('mdrrmo.operations.assign-resources', $operation), [
+        'ambulance_ids' => [$ambulance->id],
+        'personnel_ids' => [$personnel->id],
+    ])->assertSessionHasNoErrors();
+
+    $assignment = OperationPersonnel::where('operation_id', $operation->id)
+        ->where('personnel_id', $personnel->id)
+        ->first();
+
+    expect($assignment->previous_availability_status)
+        ->toBe(MdrrmoPersonnel::AVAILABILITY_ON_DUTY)
+        ->and($personnel->fresh()->availability_status)
+        ->toBe(MdrrmoPersonnel::AVAILABILITY_ASSIGNED);
+});
+
+test('personnel originally on duty return to on duty after operation completion', function () {
+    $operation = makeOperation();
+    $ambulance = makeAvailableAmbulance();
+    $personnel = makeAvailablePersonnel();
+
+    $personnel->update([
+        'availability_status' => MdrrmoPersonnel::AVAILABILITY_ON_DUTY,
+    ]);
+
+    $this->post(route('mdrrmo.operations.assign-resources', $operation), [
+        'ambulance_ids' => [$ambulance->id],
+        'personnel_ids' => [$personnel->id],
+    ])->assertSessionHasNoErrors();
+
+    $this->patch(route('mdrrmo.operations.dispatch', $operation))
+        ->assertSessionHasNoErrors();
+
+    $this->patch(route('mdrrmo.operations.complete', $operation))
+        ->assertSessionHasNoErrors();
+
+    expect($personnel->fresh()->availability_status)
+        ->toBe(MdrrmoPersonnel::AVAILABILITY_ON_DUTY);
+});
+
+test('personnel originally on duty return to on duty after operation cancellation', function () {
+    $operation = makeOperation();
+    $ambulance = makeAvailableAmbulance();
+    $personnel = makeAvailablePersonnel();
+
+    $personnel->update([
+        'availability_status' => MdrrmoPersonnel::AVAILABILITY_ON_DUTY,
+    ]);
+
+    $this->post(route('mdrrmo.operations.assign-resources', $operation), [
+        'ambulance_ids' => [$ambulance->id],
+        'personnel_ids' => [$personnel->id],
+    ])->assertSessionHasNoErrors();
+
+    $this->patch(route('mdrrmo.operations.cancel', $operation))
+        ->assertSessionHasNoErrors();
+
+    expect($personnel->fresh()->availability_status)
+        ->toBe(MdrrmoPersonnel::AVAILABILITY_ON_DUTY);
+});
