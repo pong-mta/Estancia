@@ -17,7 +17,7 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Estancia MDRRMO | Emergency Operations" />
+            <Head title="Estancia Offices | Municipal Office Portal" />
             <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
                 <div className="pointer-events-none absolute inset-0">
                     <div className="absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-red-600/10 blur-3xl" />
@@ -29,8 +29,8 @@ export default function Welcome() {
                     <Link href="/" className="flex items-center gap-3">
                         <MdrRmoMark />
                         <span>
-                            <span className="block text-sm font-bold tracking-[0.16em]">ESTANCIA MDRRMO</span>
-                            <span className="block text-xs text-slate-400">Emergency Operations System</span>
+                            <span className="block text-sm font-bold tracking-[0.16em]">ESTANCIA OFFICES</span>
+                            <span className="block text-xs text-slate-400">Municipal Office Portal</span>
                         </span>
                     </Link>
                     <nav className="flex items-center gap-3">
@@ -78,7 +78,7 @@ export default function Welcome() {
                             <div className="flex items-center justify-between border-b border-white/10 pb-5">
                                 <div className="flex items-center gap-3">
                                     <MdrRmoMark className="h-11 w-11" />
-                                    <div><p className="font-semibold">MDRRMO Operations</p><p className="text-xs text-slate-400">Management System</p></div>
+                                    <div><p className="font-semibold">Estancia Offices</p><p className="text-xs text-slate-400">Municipal Office Portal</p></div>
                                 </div>
                                 <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-semibold tracking-wider text-emerald-300">SYSTEM PORTAL</span>
                             </div>
