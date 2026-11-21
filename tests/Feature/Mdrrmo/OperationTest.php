@@ -292,3 +292,103 @@ test('administrator can replace assignments and release removed resources', func
         ->and(OperationPersonnel::where('operation_id', $operation->id)->whereNull('released_at')->pluck('personnel_id')->all())
             ->toBe([$secondPersonnel->id]);
 });
+
+test('administrator cannot assign an ambulance with an active assignment even if its status says available', function () {
+    $firstOperation = makeOperation();
+    $secondOperation = makeOperation();
+    $ambulance = makeAvailableAmbulance();
+
+    // Seed the existing active assignment directly so this test isolates the
+    // duplicate-assignment protection from the first operation's HTTP workflow.
+    OperationAmbulance::create([
+        'operation_id' => $firstOperation->id,
+        'ambulance_id' => $ambulance->id,
+        'assigned_at' => now(),
+        'released_at' => null,
+    ]);
+
+    // Simulate inconsistent resource status while keeping the active assignment.
+    $ambulance->update(['status' => Ambulance::STATUS_AVAILABLE]);
+
+    $this->from(route('mdrrmo.operations.show', $secondOperation))
+        ->post(route('mdrrmo.operations.assign-resources', $secondOperation), [
+            'ambulance_ids' => [$ambulance->id],
+        ])
+        ->assertSessionHasErrors('ambulance_ids');
+
+    expect(OperationAmbulance::where('operation_id', $firstOperation->id)
+        ->where('ambulance_id', $ambulance->id)
+        ->whereNull('released_at')->exists())->toBeTrue()
+        ->and(OperationAmbulance::where('operation_id', $secondOperation->id)
+            ->where('ambulance_id', $ambulance->id)->exists())->toBeFalse()
+        ->and($ambulance->fresh()->status)->toBe(Ambulance::STATUS_AVAILABLE);
+});
+
+test('administrator cannot assign personnel with an active assignment even if availability says available', function () {
+    $firstOperation = makeOperation();
+    $secondOperation = makeOperation();
+    $personnel = makeAvailablePersonnel();
+
+    // Seed the existing active assignment directly so this test isolates the
+    // duplicate-assignment protection from the first operation's HTTP workflow.
+    OperationPersonnel::create([
+        'operation_id' => $firstOperation->id,
+        'personnel_id' => $personnel->id,
+        'assignment_role' => $personnel->role,
+        'assigned_at' => now(),
+        'released_at' => null,
+    ]);
+
+    // Simulate inconsistent availability while keeping the active assignment.
+    $personnel->update([
+        'availability_status' => MdrrmoPersonnel::AVAILABILITY_AVAILABLE,
+    ]);
+
+    $this->from(route('mdrrmo.operations.show', $secondOperation))
+        ->post(route('mdrrmo.operations.assign-resources', $secondOperation), [
+            'personnel_ids' => [$personnel->id],
+        ])
+        ->assertSessionHasErrors('personnel_ids');
+
+    expect(OperationPersonnel::where('operation_id', $firstOperation->id)
+        ->where('personnel_id', $personnel->id)
+        ->whereNull('released_at')->exists())->toBeTrue()
+        ->and(OperationPersonnel::where('operation_id', $secondOperation->id)
+            ->where('personnel_id', $personnel->id)->exists())->toBeFalse()
+        ->and($personnel->fresh()->availability_status)->toBe(MdrrmoPersonnel::AVAILABILITY_AVAILABLE);
+});
+
+test('resources can be assigned to another operation after their previous operation is cancelled', function () {
+    $firstOperation = makeOperation();
+    $secondOperation = makeOperation();
+    $ambulance = makeAvailableAmbulance();
+    $personnel = makeAvailablePersonnel();
+
+    $this->post(route('mdrrmo.operations.assign-resources', $firstOperation), [
+        'ambulance_ids' => [$ambulance->id],
+        'personnel_ids' => [$personnel->id],
+    ])->assertSessionHasNoErrors();
+
+    $this->patch(route('mdrrmo.operations.cancel', $firstOperation))
+        ->assertSessionHasNoErrors();
+
+    $this->post(route('mdrrmo.operations.assign-resources', $secondOperation), [
+        'ambulance_ids' => [$ambulance->id],
+        'personnel_ids' => [$personnel->id],
+    ])->assertSessionHasNoErrors();
+
+    expect(OperationAmbulance::where('operation_id', $firstOperation->id)
+        ->where('ambulance_id', $ambulance->id)
+        ->whereNotNull('released_at')->exists())->toBeTrue()
+        ->and(OperationPersonnel::where('operation_id', $firstOperation->id)
+            ->where('personnel_id', $personnel->id)
+            ->whereNotNull('released_at')->exists())->toBeTrue()
+        ->and(OperationAmbulance::where('operation_id', $secondOperation->id)
+            ->where('ambulance_id', $ambulance->id)
+            ->whereNull('released_at')->exists())->toBeTrue()
+        ->and(OperationPersonnel::where('operation_id', $secondOperation->id)
+            ->where('personnel_id', $personnel->id)
+            ->whereNull('released_at')->exists())->toBeTrue()
+        ->and($ambulance->fresh()->status)->toBe(Ambulance::STATUS_ASSIGNED)
+        ->and($personnel->fresh()->availability_status)->toBe(MdrrmoPersonnel::AVAILABILITY_ASSIGNED);
+});

@@ -76,7 +76,15 @@ class AmbulanceController extends Controller
             'model' => ['nullable', 'string', 'max:100'],
             'year' => ['nullable', 'integer', 'min:1900', 'max:2100'],
             'ambulance_type' => ['required', 'string', Rule::in(array_keys(Ambulance::types()))],
-            'status' => ['required', 'string', Rule::in(array_keys(Ambulance::statuses()))],
+            'status' => [
+                'required',
+                'string',
+                Rule::in([
+                    Ambulance::STATUS_AVAILABLE,
+                    Ambulance::STATUS_MAINTENANCE,
+                    Ambulance::STATUS_INACTIVE,
+                ]),
+            ],
             'registration_number' => ['nullable', 'string', 'max:100'],
             'registration_expiry' => ['nullable', 'date'],
             'insurance_expiry' => ['nullable', 'date'],
@@ -116,18 +124,27 @@ class AmbulanceController extends Controller
             'model' => ['nullable', 'string', 'max:100'],
             'year' => ['nullable', 'integer', 'min:1900', 'max:2100'],
             'ambulance_type' => ['required', 'string', Rule::in(array_keys(Ambulance::types()))],
-            'status' => ['required', 'string', Rule::in(array_keys(Ambulance::statuses()))],
+            'status' => [
+                'required',
+                'string',
+                Rule::in(
+                    in_array($ambulance->status, [
+                        Ambulance::STATUS_ASSIGNED,
+                        Ambulance::STATUS_ON_MISSION,
+                    ], true)
+                        ? [$ambulance->status]
+                        : [
+                            Ambulance::STATUS_AVAILABLE,
+                            Ambulance::STATUS_MAINTENANCE,
+                            Ambulance::STATUS_INACTIVE,
+                        ]
+                ),
+            ],
             'registration_number' => ['nullable', 'string', 'max:100'],
             'registration_expiry' => ['nullable', 'date'],
             'insurance_expiry' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
-
-        // Do not let a routine edit manually mark an active mission as available.
-        if (in_array($ambulance->status, [Ambulance::STATUS_ASSIGNED, Ambulance::STATUS_ON_MISSION], true)
-            && ($validated['status'] ?? $ambulance->status) !== $ambulance->status) {
-            return back()->with('error', 'This ambulance has an active assignment or mission. Its status cannot be changed here.');
-        }
 
         $ambulance->update($validated);
 

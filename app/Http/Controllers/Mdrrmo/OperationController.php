@@ -52,10 +52,24 @@ class OperationController extends Controller
             ->latest('id')
             ->paginate(10)
             ->withQueryString();
-
+            $approvedBookings = AmbulanceBooking::query()
+                ->where('status', AmbulanceBooking::STATUS_APPROVED)
+                ->whereNotIn(
+                    'id',
+                    Operation::query()->select('booking_id')
+                )
+                ->latest('id')
+                ->get([
+                    'id',
+                    'request_number',
+                    'requester_name',
+                    'pickup_address',
+                    'destination_address',
+                ]);
         return Inertia::render('mdrrmo/operations/index', [
             'operations' => $operations,
             'statuses' => Operation::statuses(),
+            'approvedBookings' => $approvedBookings,
             'filters' => [
                 'search' => $request->input('search', ''),
                 'status' => $request->input('status', ''),
@@ -433,6 +447,12 @@ class OperationController extends Controller
                 continue;
             }
 
+            if ($this->ambulanceHasAnotherActiveOperation($ambulance->id, $operation->id)) {
+                throw ValidationException::withMessages([
+                    'ambulance_ids' => "Ambulance {$ambulance->vehicle_code} already has an active operation assignment.",
+                ]);
+            }
+
             if (! $ambulance->isAvailable()) {
                 throw ValidationException::withMessages([
                     'ambulance_ids' => "Ambulance {$ambulance->vehicle_code} is not available.",
@@ -488,6 +508,12 @@ class OperationController extends Controller
 
             if ($existing && $existing->released_at === null) {
                 continue;
+            }
+
+            if ($this->personnelHasAnotherActiveOperation($member->id, $operation->id)) {
+                throw ValidationException::withMessages([
+                    'personnel_ids' => 'A selected personnel member already has an active operation assignment.',
+                ]);
             }
 
             if (! $member->canBeAssigned()) {
@@ -608,6 +634,44 @@ class OperationController extends Controller
         }
 
         $this->addPersonnel($operation, $desiredIds);
+    }
+
+    /**
+     * Check assignment records, not just the resource status field, before
+     * assigning an ambulance to another operation.
+     */
+    private function ambulanceHasAnotherActiveOperation(int $ambulanceId, int $operationId): bool
+    {
+        return OperationAmbulance::query()
+            ->where('ambulance_id', $ambulanceId)
+            ->where('operation_id', '!=', $operationId)
+            ->whereNull('released_at')
+            ->whereIn('operation_id', Operation::query()
+                ->whereNotIn('status', [
+                    Operation::STATUS_COMPLETED,
+                    Operation::STATUS_CANCELLED,
+                ])
+                ->select('id'))
+            ->exists();
+    }
+
+    /**
+     * Check assignment records, not just availability_status, before
+     * assigning personnel to another operation.
+     */
+    private function personnelHasAnotherActiveOperation(int $personnelId, int $operationId): bool
+    {
+        return OperationPersonnel::query()
+            ->where('personnel_id', $personnelId)
+            ->where('operation_id', '!=', $operationId)
+            ->whereNull('released_at')
+            ->whereIn('operation_id', Operation::query()
+                ->whereNotIn('status', [
+                    Operation::STATUS_COMPLETED,
+                    Operation::STATUS_CANCELLED,
+                ])
+                ->select('id'))
+            ->exists();
     }
 
     /**

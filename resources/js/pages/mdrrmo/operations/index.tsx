@@ -1,4 +1,4 @@
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, Link, router, useForm } from "@inertiajs/react";
 import { useState, type FormEvent } from "react";
 import {
     Activity,
@@ -59,6 +59,7 @@ interface PaginatedOperations {
 
 interface Props {
     operations: PaginatedOperations;
+    approvedBookings: Booking[];
     statuses: Record<string, string>;
     filters: {
         search: string;
@@ -68,11 +69,26 @@ interface Props {
 
 export default function OperationsIndex({
     operations,
+    approvedBookings,
     statuses,
     filters,
 }: Props) {
     const [search, setSearch] = useState(filters.search ?? "");
     const [status, setStatus] = useState(filters.status ?? "");
+
+    const operationForm = useForm({
+        booking_id: "",
+        notes: "",
+    });
+
+    const createOperation = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        operationForm.post("/mdrrmo/operations", {
+            preserveScroll: true,
+            onSuccess: () => operationForm.reset(),
+        });
+    };
 
     const applyFilters = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -205,6 +221,105 @@ export default function OperationsIndex({
                         </p>
                     </div>
 
+                </div>
+
+                {/* Create Operation */}
+                <div className="rounded-xl border bg-card p-5">
+                    <div className="mb-4">
+                        <h2 className="font-semibold">Create New Operation</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Create an operation from an approved booking. You can
+                            assign ambulances and personnel after creating it.
+                        </p>
+                    </div>
+
+                    {approvedBookings.length > 0 ? (
+                        <form
+                            onSubmit={createOperation}
+                            className="grid grid-cols-1 gap-4 md:grid-cols-2"
+                        >
+                            <div className="md:col-span-2">
+                                <label
+                                    htmlFor="booking_id"
+                                    className="mb-2 block text-sm font-medium"
+                                >
+                                    Approved Booking
+                                </label>
+                                <select
+                                    id="booking_id"
+                                    value={operationForm.data.booking_id}
+                                    onChange={(event) =>
+                                        operationForm.setData(
+                                            "booking_id",
+                                            event.target.value,
+                                        )
+                                    }
+                                    className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+                                    required
+                                >
+                                    <option value="">Select an approved booking</option>
+                                    {approvedBookings.map((booking) => (
+                                        <option key={booking.id} value={booking.id}>
+                                            {booking.request_number} — {booking.requester_name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {operationForm.errors.booking_id && (
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {operationForm.errors.booking_id}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <label
+                                    htmlFor="operation_notes"
+                                    className="mb-2 block text-sm font-medium"
+                                >
+                                    Operation Notes <span className="font-normal text-muted-foreground">(Optional)</span>
+                                </label>
+                                <textarea
+                                    id="operation_notes"
+                                    value={operationForm.data.notes}
+                                    onChange={(event) =>
+                                        operationForm.setData("notes", event.target.value)
+                                    }
+                                    rows={3}
+                                    maxLength={5000}
+                                    placeholder="Add initial notes or special instructions..."
+                                    className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+                                />
+                                {operationForm.errors.notes && (
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {operationForm.errors.notes}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="md:col-span-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-xs text-muted-foreground">
+                                    Only approved bookings without an existing operation are listed.
+                                </p>
+                                <button
+                                    type="submit"
+                                    disabled={
+                                        operationForm.processing ||
+                                        !operationForm.data.booking_id
+                                    }
+                                    className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {operationForm.processing
+                                        ? "Creating Operation..."
+                                        : "Create Operation"}
+                                </button>
+                            </div>
+                        </form>
+                    ) : (
+                        <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                            There are currently no approved bookings available to
+                            convert into a new operation.
+                        </div>
+                    )}
                 </div>
 
                 {/* Search and Filters */}

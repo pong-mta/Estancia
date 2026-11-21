@@ -124,20 +124,15 @@ class PersonnelController extends Controller
             ],
             'availability_status' => [
                 'required',
-                Rule::in(array_keys(MdrrmoPersonnel::availabilityStatuses())),
+                Rule::in([
+                    MdrrmoPersonnel::AVAILABILITY_AVAILABLE,
+                    MdrrmoPersonnel::AVAILABILITY_ON_DUTY,
+                    MdrrmoPersonnel::AVAILABILITY_OFF_DUTY,
+                ]),
             ],
             'address' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
-
-        if (
-            $validated['employment_status'] === MdrrmoPersonnel::EMPLOYMENT_INACTIVE
-            && $validated['availability_status'] === MdrrmoPersonnel::AVAILABILITY_ASSIGNED
-        ) {
-            return back()->withErrors([
-                'availability_status' => 'Inactive personnel cannot remain assigned to a mission.',
-            ])->withInput();
-        }
 
         MdrrmoPersonnel::create($validated);
 
@@ -196,18 +191,26 @@ class PersonnelController extends Controller
             ],
             'availability_status' => [
                 'required',
-                Rule::in(array_keys(MdrrmoPersonnel::availabilityStatuses())),
+                Rule::in(
+                    $personnel->availability_status === MdrrmoPersonnel::AVAILABILITY_ASSIGNED
+                        ? [MdrrmoPersonnel::AVAILABILITY_ASSIGNED]
+                        : [
+                            MdrrmoPersonnel::AVAILABILITY_AVAILABLE,
+                            MdrrmoPersonnel::AVAILABILITY_ON_DUTY,
+                            MdrrmoPersonnel::AVAILABILITY_OFF_DUTY,
+                        ]
+                ),
             ],
             'address' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
         if (
-            $validated['employment_status'] === MdrrmoPersonnel::EMPLOYMENT_INACTIVE
-            && $validated['availability_status'] === MdrrmoPersonnel::AVAILABILITY_ASSIGNED
+            $personnel->availability_status === MdrrmoPersonnel::AVAILABILITY_ASSIGNED
+            && $validated['employment_status'] === MdrrmoPersonnel::EMPLOYMENT_INACTIVE
         ) {
             return back()->withErrors([
-                'availability_status' => 'Inactive personnel cannot remain assigned to a mission.',
+                'employment_status' => 'Personnel assigned to an operation cannot be deactivated.',
             ])->withInput();
         }
 
