@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MdrrmoPersonnel extends Model
 {
@@ -100,9 +101,20 @@ class MdrrmoPersonnel extends Model
         return $this->employment_status === self::EMPLOYMENT_ACTIVE
             && $this->availability_status === self::AVAILABILITY_AVAILABLE;
     }
-
     public function canBeAssigned(): bool
     {
-        return $this->isAvailable();
+        return $this->employment_status === self::EMPLOYMENT_ACTIVE
+            && in_array($this->availability_status, [
+                self::AVAILABILITY_AVAILABLE,
+                self::AVAILABILITY_ON_DUTY,
+            ], true);
+    }
+
+    /**
+     * Operation assignments connected to this personnel.
+     */
+    public function operationAssignments(): HasMany
+    {
+        return $this->hasMany(OperationPersonnel::class, 'personnel_id');
     }
 }
