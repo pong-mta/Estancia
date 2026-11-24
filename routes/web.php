@@ -236,7 +236,7 @@ Route::middleware(['auth'])
         ->group(function () {
             Route::get('/operations', OperationsDashboardController::class)
                 ->name('operations.dashboard');
-                
+
             // Dispatch Operations
             Route::get('/dispatch', [OperationController::class, 'index'])
                 ->name('dispatch.index');
@@ -272,7 +272,12 @@ Route::middleware(['auth'])
             Route::patch('/bookings/{booking}/reject', [BookingRequestController::class, 'reject'])
                 ->name('bookings.reject');
 
-             // Operations Management
+             // Dispatch History
+            Route::get('/dispatch-history',
+                [OperationController::class, 'dispatchHistory'])
+                ->name('dispatch-history.index');
+
+            // Operations Management
             Route::get('/operations/manage', [OperationController::class, 'index'])
                 ->name('operations.index');
 
@@ -297,6 +302,11 @@ Route::middleware(['auth'])
                 'start',
             ])->name('operations.start');
 
+            Route::patch('/operations/{operation}/return', [
+                OperationController::class,
+                'returnToStation',
+            ])->name('operations.return');
+
             Route::patch('/operations/{operation}/complete', [
                 OperationController::class,
                 'complete',
@@ -311,6 +321,10 @@ Route::middleware(['auth'])
                 OperationController::class,
                 'updateResources',
             ])->name('operations.update-resources');
+            Route::get('/dispatch-history/export', [
+                OperationController::class,
+                'exportDispatchHistory',
+            ])->name('dispatch-history.export');
         });
 
 

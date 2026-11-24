@@ -8,6 +8,7 @@ interface Ambulance { id: number; vehicle_code: string; plate_number: string | n
 interface Personnel { id: number; employee_id: string; first_name: string; middle_name: string | null; last_name: string; role: string; }
 interface Operation {
     id: number; operation_number: string; status: string; notes: string | null; created_at: string;
+    dispatched_at: string | null; started_at: string | null; returned_at: string | null; completed_at: string | null;
     booking: Booking | null;
     ambulances: { id: number; ambulance_id: number; released_at: string | null; ambulance: Ambulance | null }[];
     personnel: { id: number; personnel_id: number; assignment_role: string | null; released_at: string | null; personnel: Personnel | null }[];
@@ -28,7 +29,7 @@ export default function OperationShow({ operation, statuses, availableAmbulances
         e.preventDefault();
         form.patch(`/mdrrmo/operations/${operation.id}/resources`, { preserveScroll: true });
     };
-    const runAction = (action: "dispatch" | "start" | "complete" | "cancel", message: string) => {
+    const runAction = (action: "dispatch" | "start" | "return" | "complete" | "cancel", message: string) => {
         if (!window.confirm(message)) return;
         setActionProcessing(true);
         router.patch(`/mdrrmo/operations/${operation.id}/${action}`, {}, {
@@ -60,7 +61,7 @@ export default function OperationShow({ operation, statuses, availableAmbulances
                     <Info label="Operation Number" value={operation.operation_number} />
                     <Info label="Booking Number" value={operation.booking?.request_number ?? "N/A"} />
                     <Info label="Requester" value={operation.booking?.requester_name ?? "N/A"} />
-                    <Info label="Date Created" value={new Date(operation.created_at).toLocaleString()} />
+                    <Info label="Date Created" value={new Date(operation.created_at).toLocaleString()} />\n                    <Info label="Time of Dispatch" value={operation.dispatched_at ? new Date(operation.dispatched_at).toLocaleString() : "Not dispatched"} />\n                    <Info label="Time Returned to Station" value={operation.returned_at ? new Date(operation.returned_at).toLocaleString() : "Not yet returned"} />\n                    <Info label="Time Completed" value={operation.completed_at ? new Date(operation.completed_at).toLocaleString() : "Not completed"} />
                     <Info label="Pickup Address" value={operation.booking?.pickup_address ?? "N/A"} />
                     <Info label="Destination" value={operation.booking?.destination_address ?? "N/A"} />
                 </div>
@@ -123,9 +124,10 @@ export default function OperationShow({ operation, statuses, availableAmbulances
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                     {operation.status === "assigned" && <Action icon={<Send className="size-4" />} disabled={actionProcessing || form.processing} onClick={() => runAction("dispatch", "Dispatch this operation now? The assigned resources will be committed to the mission.")}>{actionProcessing ? "Processing..." : "Dispatch Operation"}</Action>}
                     {operation.status === "dispatched" && <Action icon={<Play className="size-4" />} disabled={actionProcessing} onClick={() => runAction("start", "Mark this operation as In Progress?")}>{actionProcessing ? "Processing..." : "Start Operation"}</Action>}
-                    {["dispatched", "in_progress"].includes(operation.status) && <Action icon={<CheckCircle2 className="size-4" />} disabled={actionProcessing} onClick={() => runAction("complete", "Mark this operation as Completed and release its assigned resources?")}>{actionProcessing ? "Processing..." : "Complete Operation"}</Action>}
+                    {["dispatched", "in_progress", "returned"].includes(operation.status) && <Action icon={<CheckCircle2 className="size-4" />} disabled={actionProcessing} onClick={() => runAction("complete", "Confirm that all assigned ambulance(s) have returned to the MDRRMO Station? This will record the return time, complete the operation, and release its assigned resources.")}>{actionProcessing ? "Processing..." : "Complete Operation"}</Action>}
                     {["preparing", "assigned"].includes(operation.status) && <button type="button" disabled={actionProcessing || form.processing} onClick={() => runAction("cancel", "Cancel this operation? Its assigned resources will be released.")} className="inline-flex items-center gap-2 rounded-lg border border-destructive/40 px-4 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 disabled:opacity-50"><XCircle className="size-4" /> Cancel Operation</button>}
                     {operation.status === "preparing" && <p className="text-sm text-muted-foreground">Assign at least one ambulance and one personnel member to enable dispatch.</p>}
+
                     {operation.status === "completed" && <p className="text-sm font-medium text-green-600">This operation has been completed.</p>}
                     {operation.status === "cancelled" && <p className="text-sm text-muted-foreground">This operation has been cancelled.</p>}
                 </div>
