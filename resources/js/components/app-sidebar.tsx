@@ -332,7 +332,7 @@ const operationsNavItems: NavItem[] = [
     },
     {
         title: "Mission History",
-        href: "/mdrrmo/missions",
+        href: "/mdrrmo/dispatch-history",
         icon: History,
     },
 ];

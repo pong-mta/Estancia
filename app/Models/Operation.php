@@ -18,6 +18,7 @@ class Operation extends Model
         'created_by',
         'dispatched_at',
         'started_at',
+        'returned_at',
         'completed_at',
         'cancelled_at',
         'notes',
@@ -28,6 +29,7 @@ class Operation extends Model
     public const STATUS_ASSIGNED = 'assigned';
     public const STATUS_DISPATCHED = 'dispatched';
     public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_RETURNED = 'returned';
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_CANCELLED = 'cancelled';
 
@@ -36,6 +38,7 @@ class Operation extends Model
         return [
             'dispatched_at' => 'datetime',
             'started_at' => 'datetime',
+            'returned_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
         ];
@@ -51,6 +54,7 @@ class Operation extends Model
             self::STATUS_ASSIGNED => 'Assigned',
             self::STATUS_DISPATCHED => 'Dispatched',
             self::STATUS_IN_PROGRESS => 'In Progress',
+            self::STATUS_RETURNED => 'Returned to Station',
             self::STATUS_COMPLETED => 'Completed',
             self::STATUS_CANCELLED => 'Cancelled',
         ];
@@ -98,6 +102,7 @@ class Operation extends Model
             self::STATUS_ASSIGNED,
             self::STATUS_DISPATCHED,
             self::STATUS_IN_PROGRESS,
+            self::STATUS_RETURNED,
         ], true);
     }
 }

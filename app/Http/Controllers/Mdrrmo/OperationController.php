@@ -77,6 +77,196 @@ class OperationController extends Controller
         ]);
     }
 
+
+        /**
+     * Display and filter all operations that have been dispatched.
+     */
+        public function dispatchHistory(Request $request): Response
+    {
+        $search = trim((string) $request->input('search', ''));
+        $status = (string) $request->input('status', '');
+        $date = (string) $request->input('date', '');
+
+        // Only show the necessary statuses in Dispatch History.
+        $dispatchStatuses = array_intersect_key(
+            Operation::statuses(),
+            array_flip([
+                'in_progress',
+                'completed',
+                'cancelled',
+            ])
+        );
+
+        $operations = Operation::query()
+            ->with([
+                'booking',
+                'ambulances.ambulance',
+                'personnel.personnel',
+            ])
+            ->whereNotNull('dispatched_at')
+
+            // Search filter
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery
+                        ->where('operation_number', 'like', "%{$search}%")
+                        ->orWhereHas('booking', function ($bookingQuery) use ($search) {
+                            $bookingQuery->where(function ($bookingSearch) use ($search) {
+                                $bookingSearch
+                                    ->where('request_number', 'like', "%{$search}%")
+                                    ->orWhere('requester_name', 'like', "%{$search}%")
+                                    ->orWhere('requester_phone', 'like', "%{$search}%")
+                                    ->orWhere('purpose', 'like', "%{$search}%")
+                                    ->orWhere('purpose_details', 'like', "%{$search}%")
+                                    ->orWhere('pickup_address', 'like', "%{$search}%")
+                                    ->orWhere('pickup_barangay', 'like', "%{$search}%")
+                                    ->orWhere('destination_address', 'like', "%{$search}%")
+                                    ->orWhere('destination_barangay', 'like', "%{$search}%");
+                            });
+                        });
+                });
+            })
+
+            // Status filter
+            ->when(
+                $status !== '' && array_key_exists($status, $dispatchStatuses),
+                fn ($query) => $query->where('status', $status)
+            )
+
+            // Dispatch date filter
+            ->when(
+                $date !== '',
+                fn ($query) => $query->whereDate('dispatched_at', $date)
+            )
+
+            ->latest('dispatched_at')
+            ->paginate(10)
+            ->withQueryString();
+
+        return Inertia::render('mdrrmo/dispatch-history/index', [
+            'operations' => $operations,
+            'statuses' => $dispatchStatuses,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'date' => $date,
+            ],
+        ]);
+    }
+
+    /**
+     * Download all dispatch records matching the Dispatch History filters.
+     * The CSV file opens directly in Microsoft Excel.
+     */
+    public function exportDispatchHistory(Request $request)
+    {
+        $search = trim((string) $request->input('search', ''));
+        $status = (string) $request->input('status', '');
+        $date = (string) $request->input('date', '');
+
+        $dispatchStatuses = array_intersect_key(
+            Operation::statuses(),
+            array_flip(['in_progress', 'completed', 'cancelled'])
+        );
+
+        $operations = Operation::query()
+            ->with(['booking', 'ambulances.ambulance', 'personnel.personnel'])
+            ->whereNotNull('dispatched_at')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery
+                        ->where('operation_number', 'like', "%{$search}%")
+                        ->orWhereHas('booking', function ($bookingQuery) use ($search) {
+                            $bookingQuery->where(function ($bookingSearch) use ($search) {
+                                $bookingSearch
+                                    ->where('request_number', 'like', "%{$search}%")
+                                    ->orWhere('requester_name', 'like', "%{$search}%")
+                                    ->orWhere('requester_phone', 'like', "%{$search}%")
+                                    ->orWhere('purpose', 'like', "%{$search}%")
+                                    ->orWhere('purpose_details', 'like', "%{$search}%")
+                                    ->orWhere('pickup_address', 'like', "%{$search}%")
+                                    ->orWhere('pickup_barangay', 'like', "%{$search}%")
+                                    ->orWhere('destination_address', 'like', "%{$search}%")
+                                    ->orWhere('destination_barangay', 'like', "%{$search}%");
+                            });
+                        });
+                });
+            })
+            ->when(
+                $status !== '' && array_key_exists($status, $dispatchStatuses),
+                fn ($query) => $query->where('status', $status)
+            )
+            ->when(
+                $date !== '',
+                fn ($query) => $query->whereDate('dispatched_at', $date)
+            )
+            ->latest('dispatched_at')
+            ->get();
+
+        return response()->streamDownload(function () use ($operations, $dispatchStatuses) {
+            $output = fopen('php://output', 'w');
+
+            // UTF-8 BOM helps spreadsheet applications display text correctly.
+            fwrite($output, "\\xEF\\xBB\\xBF");
+
+            fputcsv($output, [
+                'Dispatch No.',
+                'Date',
+                'Time of Dispatch',
+                'Time of Arrival',
+                'Incident Type',
+                'Location',
+                'Destination',
+                'Ambulance',
+                'Personnel',
+                'Status',
+            ]);
+
+            foreach ($operations as $operation) {
+                $booking = $operation->booking;
+
+                $location = trim(implode(', ', array_filter([
+                    $booking?->pickup_address,
+                    $booking?->pickup_barangay,
+                ])));
+
+                $destination = trim(implode(', ', array_filter([
+                    $booking?->destination_address,
+                    $booking?->destination_barangay,
+                ])));
+
+                $ambulances = $operation->ambulances
+                    ->map(fn ($assignment) => $assignment->ambulance?->vehicle_code)
+                    ->filter()
+                    ->implode(', ');
+
+                $personnel = $operation->personnel
+                    ->map(fn ($assignment) => $assignment->personnel
+                        ? trim($assignment->personnel->first_name . ' ' . $assignment->personnel->last_name)
+                        : null)
+                    ->filter()
+                    ->implode(', ');
+
+                fputcsv($output, [
+                    $operation->operation_number,
+                    $operation->dispatched_at?->format('Y-m-d'),
+                    $operation->dispatched_at?->format('h:i A'),
+                    $operation->returned_at?->format('h:i A') ?? 'Not yet returned',
+                    $booking?->purpose ?? '',
+                    $location,
+                    $destination,
+                    $ambulances,
+                    $personnel,
+                    $dispatchStatuses[$operation->status] ?? $operation->status,
+                ]);
+            }
+
+            fclose($output);
+        }, 'dispatch-history-' . now()->format('Y-m-d-His') . '.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
     /**
      * Create an operation from an approved booking.
      */
@@ -332,8 +522,40 @@ class OperationController extends Controller
         return back()->with('success', 'Operation marked as in progress.');
     }
 
+
     /**
-     * Complete an operation and release its active resources.
+     * Record that the dispatched operation has returned to the MDRRMO station.
+     */
+    public function returnToStation(Operation $operation): RedirectResponse
+    {
+        DB::transaction(function () use ($operation) {
+            $lockedOperation = Operation::query()
+                ->lockForUpdate()
+                ->findOrFail($operation->id);
+
+            if (! in_array($lockedOperation->status, [
+                Operation::STATUS_DISPATCHED,
+                Operation::STATUS_IN_PROGRESS,
+            ], true)) {
+                throw ValidationException::withMessages([
+                    'operation' => 'Only dispatched or in-progress operations can be marked as returned.',
+                ]);
+            }
+
+            $lockedOperation->update([
+                'status' => Operation::STATUS_RETURNED,
+                'returned_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Return to MDRRMO Station recorded. You can now complete the operation.');
+    }
+
+    /**
+     * Complete an operation, record its return time, and release its resources.
+     *
+     * Option B: the administrator confirms completion once the ambulance has
+     * returned to the MDRRMO Station. Both timestamps are recorded together.
      */
     public function complete(Operation $operation): RedirectResponse
     {
@@ -351,11 +573,16 @@ class OperationController extends Controller
                 ]);
             }
 
+            // The administrator's completion confirmation records the return
+            // and completion timestamps at the same moment.
+            $completionTime = now();
+
             $this->releaseOperationResources($lockedOperation, true);
 
             $lockedOperation->update([
                 'status' => Operation::STATUS_COMPLETED,
-                'completed_at' => now(),
+                'returned_at' => $completionTime,
+                'completed_at' => $completionTime,
             ]);
 
             $lockedOperation->booking()->update([
@@ -363,7 +590,7 @@ class OperationController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Operation completed and its resources were released.');
+        return back()->with('success', 'Operation completed, return time recorded, and assigned resources released.');
     }
 
     /**
