@@ -363,11 +363,11 @@ export function AppSidebar() {
           ];
 
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader className="border-b border-white/10 px-3 py-4">
+        <Sidebar collapsible="icon" variant="inset" className="border-r border-[#D6B52C]/30 bg-[#0B1F3A] text-white">
+            <SidebarHeader className="border-b border-[#D6B52C]/40 bg-[#0B1F3A] px-3 py-4">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild className="rounded-xl text-white hover:bg-white/10 hover:text-white">
+                        <SidebarMenuButton size="lg" asChild className="rounded-xl text-white hover:bg-white/10 hover:text-white data-[active=true]:bg-white/10">
                             <Link
                                 href={
                                     isMdrrmoOperationsAdmin
@@ -383,11 +383,11 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="text-slate-100">
+            <SidebarContent className="bg-[#0B1F3A] px-2 py-3 text-slate-100 [&_[data-sidebar=menu-button]]:rounded-lg [&_[data-sidebar=menu-button]]:transition-colors [&_[data-sidebar=menu-button]:hover]:bg-white/10 [&_[data-sidebar=menu-button]:hover]:text-white [&_[data-sidebar=menu-button][data-active=true]]:border-l-4 [&_[data-sidebar=menu-button][data-active=true]]:border-[#D71920] [&_[data-sidebar=menu-button][data-active=true]]:bg-white/10 [&_[data-sidebar=menu-button][data-active=true]]:font-semibold [&_[data-sidebar=menu-button][data-active=true]]:text-white">
                 <NavMain items={visibleNavItems} />
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-white/10 px-3 py-3 text-slate-100">
+            <SidebarFooter className="border-t border-[#D6B52C]/40 bg-[#0B1F3A] px-3 py-3 text-slate-100">
                 <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>

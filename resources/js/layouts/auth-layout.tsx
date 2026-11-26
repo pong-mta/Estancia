@@ -1,17 +1,17 @@
-import AuthLayoutTemplate from '@/layouts/auth/auth-simple-layout';
+import AuthSimpleLayout from '@/layouts/auth/auth-simple-layout';
+import type { AuthLayoutProps } from '@/types';
 
 export default function AuthLayout({
-    title = '',
-    description = '',
     children,
-}: {
-    title?: string;
-    description?: string;
-    children: React.ReactNode;
-}) {
+    title,
+    description,
+}: AuthLayoutProps) {
     return (
-        <AuthLayoutTemplate title={title} description={description}>
+        <AuthSimpleLayout
+            title={title}
+            description={description}
+        >
             {children}
-        </AuthLayoutTemplate>
+        </AuthSimpleLayout>
     );
 }
